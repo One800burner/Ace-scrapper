@@ -1,0 +1,26 @@
+name: Update IPTV Playlist
+
+on:
+  schedule:
+    - cron: "0 */4 * * *"   # run every 4 hours
+  workflow_dispatch:        # allow manual trigger
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Download IPTV Playlist
+        run: |
+          mkdir -p playlists
+          curl -s "http://iptvtree.net:8080/F28312/cc1dc138/get.php?username=F28312&password=cc1dc138&type=m3u_plus&output=ts" -o playlists/latest.m3u
+
+      - name: Commit & Push updated playlist
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "actions@github.com"
+          git add playlists/latest.m3u
+          git commit -m "Update IPTV playlist" || echo "No changes to commit"
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:main
